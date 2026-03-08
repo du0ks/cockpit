@@ -6,7 +6,7 @@ import React from 'react';
 interface PanelProps {
     children: React.ReactNode;
     className?: string;
-    title?: string;
+    title?: React.ReactNode;
     headerAction?: React.ReactNode;
     noPadding?: boolean;
     glow?: boolean;
@@ -16,9 +16,8 @@ export function Panel({ children, className, title, headerAction, noPadding, glo
     return (
         <div
             className={cn(
-                'rounded-lg border border-cr-border bg-cr-panel/80 backdrop-blur-sm',
+                'rounded-md bg-cr-panel/30 backdrop-blur-sm',
                 'transition-all duration-300',
-                glow && 'hover:border-cr-border-hover hover:shadow-[0_0_20px_rgba(62,207,90,0.05)]',
                 !noPadding && 'p-4',
                 className
             )}
@@ -26,7 +25,7 @@ export function Panel({ children, className, title, headerAction, noPadding, glo
             {(title || headerAction) && (
                 <div className={cn('flex items-center justify-between', !noPadding && 'mb-3')}>
                     {title && (
-                        <h3 className="font-mono text-xs font-medium uppercase tracking-wider text-cr-text-secondary">
+                        <h3 className="font-mono text-[10px] font-medium uppercase tracking-[0.2em] text-cr-text-muted/70">
                             {title}
                         </h3>
                     )}

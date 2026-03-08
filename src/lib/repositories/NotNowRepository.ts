@@ -9,11 +9,11 @@ export class DexieNotNowRepository implements INotNowRepository {
     }
 
     async getActive(): Promise<NotNowItem[]> {
-        return db.notNowItems.where('archived').equals(0).reverse().sortBy('updatedAt');
+        return db.notNowItems.filter(item => !item.archived).reverse().sortBy('updatedAt');
     }
 
     async getArchived(): Promise<NotNowItem[]> {
-        return db.notNowItems.where('archived').equals(1).reverse().sortBy('updatedAt');
+        return db.notNowItems.filter(item => !!item.archived).reverse().sortBy('updatedAt');
     }
 
     async create(data: Omit<NotNowItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<NotNowItem> {

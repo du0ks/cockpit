@@ -27,9 +27,9 @@ export function ListItem({
     return (
         <div
             className={cn(
-                'group flex items-center gap-3 rounded-md px-3 py-2',
-                'border border-transparent transition-all duration-200',
-                'hover:bg-cr-panel-hover hover:border-cr-border',
+                'group flex items-center gap-3 rounded-none px-2 py-1.5',
+                'transition-all duration-200 border-l-2 border-transparent',
+                'hover:border-cr-accent/30 hover:bg-cr-panel/30',
                 onClick && 'cursor-pointer',
                 className
             )}
@@ -59,14 +59,14 @@ export function ListItem({
             <div className="flex-1 min-w-0">
                 <p
                     className={cn(
-                        'text-sm truncate transition-all duration-200',
-                        checked ? 'text-cr-text-muted line-through' : 'text-cr-text'
+                        'text-sm truncate transition-all duration-200 tracking-wide',
+                        checked ? 'text-cr-text-muted/50 line-through' : 'text-cr-text/90'
                     )}
                 >
                     {title}
                 </p>
                 {subtitle && (
-                    <p className="text-xs text-cr-text-muted truncate mt-0.5">{subtitle}</p>
+                    <p className="font-mono text-[10px] text-cr-text-muted/60 truncate mt-1">{subtitle}</p>
                 )}
             </div>
 

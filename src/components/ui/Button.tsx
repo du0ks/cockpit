@@ -14,15 +14,15 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<ButtonVariant, string> = {
     primary:
-        'bg-cr-accent-muted text-cr-accent border-cr-accent-dim hover:bg-cr-accent-dim hover:shadow-[0_0_12px_rgba(62,207,90,0.15)]',
+        'bg-cr-accent/10 border-cr-accent/30 text-cr-accent hover:bg-cr-accent/20 hover:border-cr-accent/50',
     secondary:
-        'bg-cr-panel text-cr-text border-cr-border hover:bg-cr-panel-hover hover:border-cr-border-hover',
+        'bg-transparent border-cr-border text-cr-text-secondary hover:bg-cr-panel/50 hover:text-cr-text hover:border-cr-border-hover',
     danger:
-        'bg-cr-danger-dim/30 text-cr-danger border-cr-danger-dim hover:bg-cr-danger-dim/50',
+        'bg-transparent border-cr-danger/30 text-cr-danger hover:bg-cr-danger/10 hover:border-cr-danger/50',
     ghost:
-        'bg-transparent text-cr-text-secondary border-transparent hover:bg-cr-panel hover:text-cr-text',
+        'bg-transparent border-transparent text-cr-text-muted hover:bg-cr-panel/30 hover:text-cr-text-secondary',
     emergency:
-        'bg-cr-danger text-white border-cr-danger hover:bg-cr-danger/80 shadow-[0_0_20px_rgba(207,62,62,0.3)] hover:shadow-[0_0_30px_rgba(207,62,62,0.5)]',
+        'bg-cr-danger/20 border-cr-danger text-cr-danger hover:bg-cr-danger/30',
 };
 
 const sizeStyles: Record<ButtonSize, string> = {

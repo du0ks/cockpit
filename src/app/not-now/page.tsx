@@ -13,6 +13,7 @@ import { useToast } from '@/components/ui/Toast';
 import { notNowRepository } from '@/lib/repositories/NotNowRepository';
 import { taskRepository } from '@/lib/repositories/TaskRepository';
 import type { NotNowItem, TaskScope } from '@/lib/models';
+import { cn } from '@/lib/utils';
 
 const VIEW_TABS = [
     { id: 'active', label: 'Active' },
@@ -139,6 +140,10 @@ export default function NotNowPage() {
     const activeItems = items.filter(i => !i.archived);
     const reviewItem = activeItems[reviewIndex];
 
+    const getDaysOld = (timestamp: number) => {
+        return Math.floor((Date.now() - timestamp) / (1000 * 60 * 60 * 24));
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -168,29 +173,47 @@ export default function NotNowPage() {
                             />
                         ) : (
                             <div className="space-y-0.5">
-                                {filteredItems.map((item) => (
-                                    <ListItem
-                                        key={item.id}
-                                        title={item.title}
-                                        subtitle={item.notes}
-                                        onClick={() => openEdit(item)}
-                                        onDelete={() => deleteItem(item.id)}
-                                        trailing={
-                                            <div className="flex items-center gap-1.5">
-                                                {item.tags.map(t => <Tag key={t} label={t} size="sm" />)}
-                                                {view === 'active' ? (
-                                                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
-                                                        Archive
-                                                    </Button>
-                                                ) : (
-                                                    <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); unarchiveItem(item.id); }}>
-                                                        Restore
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        }
-                                    />
-                                ))}
+                                {filteredItems.map((item) => {
+                                    const daysOld = getDaysOld(item.updatedAt || item.createdAt);
+                                    const isStale = daysOld > 30;
+                                    const isDecaying = daysOld > 60;
+                                    
+                                    return (
+                                        <div key={item.id} className="relative group/item">
+                                            {isStale && view === 'active' && (
+                                                <div className="absolute -left-2 top-1/2 -translate-y-1/2 w-1 h-8 bg-cr-warning/50 rounded-full" title={`Untouched for ${daysOld} days`} />
+                                            )}
+                                            <ListItem
+                                                title={item.title}
+                                                subtitle={item.notes}
+                                                onClick={() => openEdit(item)}
+                                                onDelete={() => deleteItem(item.id)}
+                                                className={cn(view === 'active' && isDecaying && "opacity-50 hover:opacity-100")}
+                                                trailing={
+                                                    <div className="flex items-center gap-1.5">
+                                                        {item.tags.map(t => <Tag key={t} label={t} size="sm" />)}
+                                                        {view === 'active' ? (
+                                                            <>
+                                                                {isStale && (
+                                                                    <span className="text-[10px] font-mono text-cr-warning/70 mr-2 hidden sm:inline-block">
+                                                                        {daysOld}d old
+                                                                    </span>
+                                                                )}
+                                                                <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); archiveItem(item.id); }}>
+                                                                    Archive
+                                                                </Button>
+                                                            </>
+                                                        ) : (
+                                                            <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); unarchiveItem(item.id); }}>
+                                                                Restore
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                }
+                                            />
+                                        </div>
+                                    );
+                                })}
                             </div>
                         )}
                     </Panel>

@@ -243,9 +243,13 @@ export default function CalmPage() {
 
                     {emergencyMessages.length > 0 && (
                         <div
-                            className="max-w-2xl px-6 text-center"
+                            className="max-w-2xl px-6 text-center relative z-10"
                             onClick={() => setEmergencyIndex(prev => Math.min(prev + 1, emergencyMessages.length - 1))}
                         >
+                            {/* Breathing Visualizer (Subtle Pulse) */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 rounded-full bg-cr-accent/5 mix-blend-screen blur-xl pointer-events-none animate-[pulse_8s_ease-in-out_infinite]" />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-48 h-48 rounded-full border border-cr-accent/10 pointer-events-none animate-[ping_8s_ease-in-out_infinite]" />
+                            
                             <p className="font-mono text-xs text-cr-text-muted mb-6">
                                 {emergencyIndex + 1} / {emergencyMessages.length}
                             </p>

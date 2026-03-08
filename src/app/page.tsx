@@ -16,9 +16,7 @@ import { objectiveRepository } from '@/lib/repositories/ObjectiveRepository';
 import { notNowRepository } from '@/lib/repositories/NotNowRepository';
 import { anxietyRepository } from '@/lib/repositories/AnxietyRepository';
 import { settingsRepository } from '@/lib/repositories/SettingsRepository';
-import { calendarEventRepository } from '@/lib/repositories/CalendarEventRepository';
-import { EVENT_TYPES } from '@/components/calendar/eventTypeConfig';
-import type { Task, Objective, NotNowItem, AnxietyLog, CalendarEvent, TaskScope } from '@/lib/models';
+import type { Task, Objective, NotNowItem, AnxietyLog, TaskScope } from '@/lib/models';
 import { formatDate, getWeekNumber, todayString, cn } from '@/lib/utils';
 
 export default function HomePage() {
@@ -30,11 +28,11 @@ export default function HomePage() {
   const [notNowItems, setNotNowItems] = useState<NotNowItem[]>([]);
   const [todayAnxiety, setTodayAnxiety] = useState<AnxietyLog | null>(null);
   const [currentFocus, setCurrentFocus] = useState('');
-  const [upcomingEvents, setUpcomingEvents] = useState<CalendarEvent[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddScope, setQuickAddScope] = useState<TaskScope>('today');
   const [anxietyScore, setAnxietyScore] = useState(5);
+  const [activeFlightPath, setActiveFlightPath] = useState<TaskScope | 'quarter'>('today');
 
   const loadData = useCallback(async () => {
     const [today, week, monthObj, quarterObj, notNow, settings] = await Promise.all([
@@ -51,14 +49,6 @@ export default function HomePage() {
     setQuarterObjectives(quarterObj.filter(o => o.status !== 'archived'));
     setNotNowItems(notNow.slice(0, 5));
     setCurrentFocus(settings.currentFocus || '');
-
-    // Load upcoming calendar events (next 7 days)
-    const todayDate = new Date().toISOString().split('T')[0];
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const nextWeekStr = nextWeek.toISOString().split('T')[0];
-    const upcoming = await calendarEventRepository.getByDateRange(todayDate, nextWeekStr);
-    setUpcomingEvents(upcoming.slice(0, 3));
 
     const anxLog = await anxietyRepository.getByDate(todayString());
     if (anxLog) {
@@ -97,8 +87,19 @@ export default function HomePage() {
     loadData();
   };
 
+  const toggleObjective = async (objective: Objective) => {
+    const newStatus = objective.status === 'done' ? 'open' : 'done';
+    await objectiveRepository.update(objective.id, { status: newStatus });
+    loadData();
+  };
+
   const deleteTask = async (id: string) => {
     await taskRepository.delete(id);
+    loadData();
+  };
+
+  const deleteObjective = async (id: string) => {
+    await objectiveRepository.delete(id);
     loadData();
   };
 
@@ -120,6 +121,23 @@ export default function HomePage() {
   const now = new Date();
   const openToday = todayTasks.filter(t => t.status === 'open').length;
   const doneToday = todayTasks.filter(t => t.status === 'done').length;
+
+  const cycleFlightPath = () => {
+    const scopes: ('today' | 'week' | 'month' | 'quarter')[] = ['today', 'week', 'month', 'quarter'];
+    const currentIndex = scopes.indexOf(activeFlightPath as any);
+    setActiveFlightPath(scopes[(currentIndex + 1) % scopes.length] as TaskScope | 'quarter');
+  };
+
+  const currentList = {
+    today: todayTasks,
+    week: weekTasks,
+    month: monthObjectives,
+    quarter: quarterObjectives,
+    someday: [],
+  }[activeFlightPath as string] as (Task | Objective)[];
+
+  const toggleCurrentItem = activeFlightPath === 'today' || activeFlightPath === 'week' ? toggleTask : toggleObjective;
+  const deleteCurrentItem = activeFlightPath === 'today' || activeFlightPath === 'week' ? deleteTask : deleteObjective;
 
   return (
     <div className="space-y-4">
@@ -162,181 +180,170 @@ export default function HomePage() {
         </div>
       </Panel>
 
-      {/* ── Main Grid ────────────────────────────────────── */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {/* Today Panel */}
+      {/* ── Main Grid (Cockpit Layout) ────────────────────────────────────── */}
+      <div className="grid gap-6 md:grid-cols-12">
+        {/* Left Sidebar: Telemetry & Context */}
+        <div className="md:col-span-3 lg:col-span-3 space-y-4">
+           {/* Anxiety Mini Panel (System Status) */}
+           <Panel title="System Status" className="border-cr-border/50 bg-transparent">
+             <div className="space-y-4">
+              <a
+                href="/calm"
+                className="block w-full rounded-md bg-cr-panel border border-cr-border py-2 text-center font-mono text-xs font-bold text-cr-text-secondary hover:bg-cr-panel-hover hover:text-cr-text transition-all duration-200"
+              >
+                FOCUS RESET (ESC)
+              </a>
+               <div className="space-y-1">
+                 <div className="flex justify-between text-[10px] font-mono text-cr-text-muted mb-1">
+                   <span>STRESS LEVEL</span>
+                   <span>{anxietyScore}/10</span>
+                 </div>
+                 <SliderInput
+                   value={anxietyScore}
+                   onChange={setAnxietyScore}
+                   min={1}
+                   max={10}
+                 />
+                 <Button size="sm" variant="ghost" onClick={saveAnxietyScore} className="w-full text-[10px] h-6 mt-1 opacity-50 hover:opacity-100">
+                   Update System
+                 </Button>
+               </div>
+             </div>
+           </Panel>
+
+           {/* Peripheral Context: Week/Month/Quarter Telemetry */}
+           <Panel title="Mission Context" className="border-cr-border/50 bg-transparent">
+             <div className="space-y-4">
+               {/* Week Progress */}
+               <div>
+                  <div className="flex justify-between text-[10px] font-mono text-cr-text-muted mb-1.5 break-all">
+                    <span>WEEKLY FOCUS</span>
+                    <span>{weekTasks.filter(t => t.status==='done').length}/{weekTasks.length}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                     <div className="h-1 flex-1 bg-cr-bg overflow-hidden rounded-full">
+                        <div className="h-full bg-cr-accent/50 transition-all" style={{ width: `${weekTasks.length === 0 ? 0 : (weekTasks.filter(t => t.status==='done').length / weekTasks.length) * 100}%`}} />
+                     </div>
+                  </div>
+               </div>
+
+                {/* Month Progress */}
+               <div>
+                  <div className="flex justify-between text-[10px] font-mono text-cr-text-muted mb-1.5">
+                    <span>MONTHLY OUTCOMES</span>
+                    <span>{monthObjectives.filter(t => t.status==='done').length}/{monthObjectives.length}</span>
+                  </div>
+                  <div className="flex gap-1">
+                     {monthObjectives.length > 0 ? Array.from({ length: Math.max(monthObjectives.length, 3) }).map((_, i) => (
+                        <div key={i} className={cn("h-1.5 flex-1 rounded-sm", 
+                           i >= monthObjectives.length ? "bg-cr-bg" : 
+                           monthObjectives[i].status === 'done' ? "bg-cr-accent/60" : "bg-cr-border"
+                        )} />
+                     )) : (
+                        <span className="text-[10px] font-mono text-cr-text-muted/50 italic">No outcomes set</span>
+                     )}
+                  </div>
+               </div>
+
+                {/* Quarter Progress */}
+               <div>
+                  <div className="flex justify-between text-[10px] font-mono text-cr-text-muted mb-1.5">
+                    <span>QUARTERLY OUTCOMES</span>
+                    <span>{quarterObjectives.filter(t => t.status==='done').length}/{quarterObjectives.length}</span>
+                  </div>
+                   <div className="flex gap-1">
+                     {quarterObjectives.length > 0 ? Array.from({ length: Math.max(quarterObjectives.length, 2) }).map((_, i) => (
+                        <div key={i} className={cn("h-1.5 flex-1 rounded-sm", 
+                           i >= quarterObjectives.length ? "bg-cr-bg" : 
+                           quarterObjectives[i].status === 'done' ? "bg-cr-accent/40" : "bg-cr-border"
+                        )} />
+                     )) : (
+                        <span className="text-[10px] font-mono text-cr-text-muted/50 italic">No outcomes set</span>
+                     )}
+                  </div>
+               </div>
+             </div>
+           </Panel>
+           
+           {/* Not Now Preview */}
+          <Panel
+            title="Parking Lot"
+            className="border-cr-border/50 bg-transparent"
+            headerAction={
+              <a href="/not-now" className="font-mono text-[10px] text-cr-accent/50 hover:text-cr-accent transition-colors">
+                View All →
+              </a>
+            }
+          >
+            {notNowItems.length === 0 ? (
+              <div className="text-[10px] font-mono text-cr-text-muted/50 italic py-2">Empty</div>
+            ) : (
+              <div className="space-y-1">
+                {notNowItems.slice(0, 3).map((item) => (
+                   <div key={item.id} className="text-[10px] font-mono truncate text-cr-text-secondary/70">
+                     • {item.title}
+                   </div>
+                ))}
+              </div>
+            )}
+          </Panel>
+        </div>
+
+        {/* Center Console: Immediate Actions */}
+        <div className="md:col-span-9 lg:col-span-9">
         <Panel
-          title="Today"
+          title={
+            <div className="flex items-center gap-2 -ml-1">
+              <span>ACTIVE FLIGHT PATH:</span>
+              <button 
+                onClick={cycleFlightPath}
+                className="text-[10px] text-cr-accent bg-cr-accent/10 hover:bg-cr-accent/20 px-2 py-0.5 rounded border border-cr-accent/30 transition-colors cursor-pointer tracking-[0.2em]"
+              >
+                {activeFlightPath}
+              </button>
+            </div>
+          }
           glow
-          className="md:col-span-2 lg:col-span-2"
+          className="h-full border-cr-border bg-cr-panel/40"
           headerAction={
-            <Button size="sm" variant="primary" onClick={() => setShowQuickAdd(true)}>
-              + Add
+            <Button size="sm" variant="primary" onClick={() => { setQuickAddScope(activeFlightPath === 'quarter' ? 'today' : activeFlightPath); setShowQuickAdd(true); }} className="h-7 text-xs px-3">
+              + Execute [N]
             </Button>
           }
         >
-          {todayTasks.length === 0 ? (
-            <EmptyState icon="▹" title="No tasks for today" description="Press 'n' or click +Add to add a task" />
+          {currentList.length === 0 ? (
+            <EmptyState icon="▹" title={`No actions for ${activeFlightPath}`} description={`Press 'n' or click +Add to add a task to ${activeFlightPath}`} />
           ) : (
-            <div className="space-y-0.5 max-h-64 overflow-y-auto">
-              {todayTasks.map((task) => (
+            <div className="space-y-1 mt-4">
+              {(currentList as any[]).filter(t => t.status === 'open').map((item) => (
                 <ListItem
-                  key={task.id}
-                  title={task.title}
-                  checked={task.status === 'done'}
-                  onToggle={() => toggleTask(task)}
-                  onDelete={() => deleteTask(task.id)}
+                  key={item.id}
+                  title={item.title}
+                  checked={item.status === 'done'}
+                  onToggle={() => toggleCurrentItem(item as any)}
+                  onDelete={() => deleteCurrentItem(item.id)}
+                  className="py-3 px-4 bg-cr-panel/60 border border-cr-border/50 hover:border-cr-accent/30 transition-colors"
                 />
               ))}
-            </div>
-          )}
-        </Panel>
-
-        {/* Anxiety Mini Panel */}
-        <Panel title="Anxiety" glow>
-          <div className="space-y-3">
-            <a
-              href="/calm"
-              className="block w-full rounded-md bg-cr-danger/20 border border-cr-danger-dim py-3 text-center font-mono text-sm font-bold text-cr-danger hover:bg-cr-danger/30 transition-all duration-200 hover:shadow-[0_0_20px_rgba(207,62,62,0.2)]"
-            >
-              ⚠ EMERGENCY
-            </a>
-            <SliderInput
-              value={anxietyScore}
-              onChange={setAnxietyScore}
-              label="Today's Score"
-              min={1}
-              max={10}
-            />
-            <Button size="sm" variant="secondary" onClick={saveAnxietyScore} className="w-full">
-              Save Score
-            </Button>
-          </div>
-        </Panel>
-
-        {/* This Week */}
-        <Panel title="This Week" glow>
-          {weekTasks.length === 0 ? (
-            <EmptyState icon="◈" title="No weekly focus items" />
-          ) : (
-            <div className="space-y-0.5 max-h-48 overflow-y-auto">
-              {weekTasks.slice(0, 7).map((task) => (
-                <ListItem
-                  key={task.id}
-                  title={task.title}
-                  checked={task.status === 'done'}
-                  onToggle={() => toggleTask(task)}
-                />
-              ))}
-              {weekTasks.length > 7 && (
-                <p className="text-xs text-cr-text-muted font-mono pl-3">+{weekTasks.length - 7} more</p>
+               {(currentList as any[]).filter(t => t.status === 'done').length > 0 && (
+                <div className="pt-4 mt-4 border-t border-cr-border/30">
+                  <h4 className="font-mono text-[10px] text-cr-text-muted mb-2 px-2 uppercase tracking-widest">Completed</h4>
+                  {(currentList as any[]).filter(t => t.status === 'done').map((item) => (
+                    <ListItem
+                      key={item.id}
+                      title={item.title}
+                      checked={item.status === 'done'}
+                      onToggle={() => toggleCurrentItem(item as any)}
+                      onDelete={() => deleteCurrentItem(item.id)}
+                      className="py-1.5 px-2 opacity-50 hover:opacity-100 transition-opacity"
+                    />
+                  ))}
+                </div>
               )}
             </div>
           )}
         </Panel>
-
-        {/* This Month */}
-        <Panel title="This Month" glow>
-          {monthObjectives.length === 0 ? (
-            <EmptyState icon="◈" title="No monthly outcomes" description="1–3 recommended" />
-          ) : (
-            <div className="space-y-0.5">
-              {monthObjectives.map((obj) => (
-                <ListItem
-                  key={obj.id}
-                  title={obj.title}
-                  subtitle={obj.notes}
-                  checked={obj.status === 'done'}
-                  onToggle={async () => {
-                    await objectiveRepository.update(obj.id, { status: obj.status === 'done' ? 'open' : 'done' });
-                    loadData();
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </Panel>
-
-        {/* This Quarter */}
-        <Panel title="This Quarter" glow>
-          {quarterObjectives.length === 0 ? (
-            <EmptyState icon="◈" title="No quarterly outcomes" description="1–2 recommended" />
-          ) : (
-            <div className="space-y-0.5">
-              {quarterObjectives.map((obj) => (
-                <ListItem
-                  key={obj.id}
-                  title={obj.title}
-                  subtitle={obj.notes}
-                  checked={obj.status === 'done'}
-                  onToggle={async () => {
-                    await objectiveRepository.update(obj.id, { status: obj.status === 'done' ? 'open' : 'done' });
-                    loadData();
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </Panel>
-
-        {/* Upcoming Events Preview */}
-        <Panel
-          title="Upcoming"
-          glow
-          headerAction={
-            <a href="/schedule" className="font-mono text-[10px] text-cr-accent hover:underline">
-              Schedule →
-            </a>
-          }
-        >
-          {upcomingEvents.length === 0 ? (
-            <EmptyState icon="◫" title="No upcoming events" description="Add events in Schedule" />
-          ) : (
-            <div className="space-y-1">
-              {upcomingEvents.map((ev) => {
-                const config = EVENT_TYPES[ev.eventType];
-                return (
-                  <div
-                    key={ev.id}
-                    className="flex items-center gap-2 rounded-md px-2 py-1.5 border transition-all duration-200 hover:bg-cr-panel-hover"
-                    style={{ borderColor: config.borderColor, backgroundColor: config.bgColor }}
-                  >
-                    <span className="text-sm">{config.icon}</span>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-mono text-xs font-medium truncate" style={{ color: config.color }}>
-                        {ev.title}
-                      </p>
-                      <p className="font-mono text-[10px] text-cr-text-muted">
-                        {ev.date} · {ev.startTime}–{ev.endTime}
-                      </p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </Panel>
-
-        {/* Not Now Preview */}
-        <Panel
-          title="Not Now"
-          glow
-          headerAction={
-            <a href="/not-now" className="font-mono text-[10px] text-cr-accent hover:underline">
-              View All →
-            </a>
-          }
-        >
-          {notNowItems.length === 0 ? (
-            <EmptyState icon="◇" title="Parking lot is empty" />
-          ) : (
-            <div className="space-y-0.5">
-              {notNowItems.map((item) => (
-                <ListItem key={item.id} title={item.title} subtitle={item.tags.join(', ')} />
-              ))}
-            </div>
-          )}
-        </Panel>
+        </div>
       </div>
 
       {/* ── Quick Add Modal ──────────────────────────────── */}
