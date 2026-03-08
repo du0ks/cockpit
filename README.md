@@ -1,36 +1,93 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Control Room
 
-## Getting Started
+A Matrix-inspired, offline-first PWA for daily/weekly/monthly/quarterly planning + anxiety "Calm Mode". Built with Next.js, TypeScript, Tailwind CSS, and Dexie (IndexedDB).
 
-First, run the development server:
+## Quick Start
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Features
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Section | Description |
+|---------|-------------|
+| **Control Room** | Dashboard with today/week/month/quarter panels, focus tracker, anxiety mini panel |
+| **Plans** | Week/Month/Quarter views — manage focus items and outcomes |
+| **Actions** | Quick capture + daily execution list with scope filters |
+| **Not Now** | Parking lot with tags, search, archive, and review mode |
+| **Calm Mode** | Emergency overlay with calming messages, anxiety score tracking |
+| **Settings** | Scanlines, reduce motion, keyboard shortcuts |
 
-## Learn More
+## Keyboard Shortcuts
 
-To learn more about Next.js, take a look at the following resources:
+- `n` — New task (opens quick add modal)
+- `/` — Focus search in Not Now
+- `Esc` — Close modal or exit Emergency Mode
+- `→` / `Space` — Next message in Emergency Mode
+- `←` — Previous message in Emergency Mode
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Next.js 16** with App Router
+- **TypeScript** — strict typing throughout
+- **Tailwind CSS v4** — Matrix-inspired theme tokens
+- **Dexie** (IndexedDB) — offline-first local storage
+- **next-pwa** — service worker + manifest for installability
 
-## Deploy on Vercel
+## Architecture
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```
+src/
+├── app/              # Pages (App Router)
+├── components/
+│   ├── ui/           # Reusable: Panel, Button, Input, Tabs, Modal, Toast, Tag, ListItem
+│   └── layout/       # Sidebar, BottomNav, AppShell
+├── lib/
+│   ├── db/           # Dexie schema + seed data
+│   ├── models/       # TypeScript interfaces
+│   ├── repositories/ # Repository interfaces + Dexie implementations
+│   └── utils/        # ID generation, date helpers
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Firebase-Ready Architecture
+
+The app uses **repository interfaces** to abstract data access:
+
+```
+ITaskRepository → DexieTaskRepository (current)
+                → FirebaseTaskRepository (future)
+```
+
+To add Firebase:
+1. Create Firebase repository implementations (e.g., `FirebaseTaskRepository`)
+2. Implement the same interfaces defined in `src/lib/repositories/interfaces.ts`
+3. Add a repository factory that switches based on auth state
+4. Add Firebase config + auth provider
+5. All UI code remains unchanged — only the data layer swaps
+
+## PWA
+
+- Install from browser ("Add to Home Screen")
+- Works offline — all data stored in IndexedDB
+- Service worker handles caching (enabled in production builds)
+
+## Build for Production
+
+```bash
+npm run build
+npm start
+```
+
+## Data Model
+
+- **Task** — scoped to today/week/month/quarter/someday
+- **Objective** — week/month/quarter outcomes
+- **NotNowItem** — parking lot with tags
+- **AnxietyLog** — daily score + thought/body/notes
+- **CalmMessage** — calming messages with pin + tags
+- **Category** — task categories with icons
+- **UserSettings** — display preferences

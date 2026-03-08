@@ -1,0 +1,28 @@
+{
+    "name": "Control Room",
+    "short_name": "Control Room",
+    "description": "Matrix-inspired planning dashboard — command your day, week, month, and quarter.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0a0d0a",
+    "theme_color": "#0a0d0a",
+    "orientation": "any",
+    "icons": [
+        {
+            "src": "/icons/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any maskable"
+        },
+        {
+            "src": "/icons/icon-512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": [
+        "productivity",
+        "lifestyle"
+    ]
+}

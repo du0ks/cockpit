@@ -1,26 +1,318 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-cr-bg: #0a0d0a;
+  --color-cr-bg-alt: #0f1410;
+  --color-cr-panel: #111a13;
+  --color-cr-panel-hover: #152018;
+  --color-cr-border: #1a2e1e;
+  --color-cr-border-hover: #2a4a30;
+  --color-cr-accent: #3ecf5a;
+  --color-cr-accent-dim: #2a8a3e;
+  --color-cr-accent-muted: #1a5428;
+  --color-cr-text: #d4e8d4;
+  --color-cr-text-secondary: #8aaa8e;
+  --color-cr-text-muted: #5a7a60;
+  --color-cr-danger: #cf3e3e;
+  --color-cr-danger-dim: #8a2a2a;
+  --color-cr-warning: #cfa63e;
+  --color-cr-success: #3ecf5a;
+
+  --font-mono: "JetBrains Mono", "Geist Mono", ui-monospace, monospace;
+  --font-sans: "Inter", "Geist", system-ui, sans-serif;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ── Base Reset ─────────────────────────────────────────── */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-cr-border) transparent;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-cr-bg);
+  color: var(--color-cr-text);
+  font-family: var(--font-sans);
+  min-height: 100dvh;
+}
+
+/* ── Background noise / gradient ───────────────────────── */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse at 20% 50%, rgba(62, 207, 90, 0.03) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 20%, rgba(62, 207, 90, 0.02) 0%, transparent 50%),
+    var(--color-cr-bg);
+  pointer-events: none;
+}
+
+/* ── CRT Scanlines (3 intensity levels) ─────────────────── */
+/* ::after = scanline overlay, ::before = pixel noise/static */
+
+.crt-1::after,
+.crt-2::after,
+.crt-3::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+/* Level 1 — subtle scanlines + gentle flicker */
+.crt-1::after {
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.04) 2px,
+      rgba(0, 0, 0, 0.04) 4px);
+  animation: crt-flicker-subtle 10s steps(1) infinite;
+}
+
+/* Level 2 — visible scanlines + noise grain + flicker */
+.crt-2::after {
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.09) 2px,
+      rgba(0, 0, 0, 0.09) 4px);
+  animation: crt-flicker-medium 7s steps(1) infinite;
+}
+
+/* Level 3 — heavy scanlines + strong noise + aggressive flicker */
+.crt-3::after {
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 2px,
+      rgba(0, 0, 0, 0.15) 4px);
+  animation: crt-flicker-heavy 5s steps(1) infinite;
+}
+
+/* ── Pixel noise / static grain (levels 2+) ─────────────── */
+.crt-2::before,
+.crt-3::before {
+  content: "";
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: 9998;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='250' height='250'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+.crt-2::before {
+  opacity: 0.025;
+  animation: crt-static 0.15s steps(2) infinite;
+}
+
+.crt-3::before {
+  opacity: 0.06;
+  animation: crt-static 0.1s steps(3) infinite;
+}
+
+/* ── CRT flicker — uses steps(1) for abrupt jumps like real CRT ── */
+@keyframes crt-flicker-subtle {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  4% {
+    opacity: 0.97;
+  }
+
+  4.5% {
+    opacity: 1;
+  }
+
+  47% {
+    opacity: 0.985;
+  }
+
+  47.5% {
+    opacity: 1;
+  }
+
+  81% {
+    opacity: 0.965;
+  }
+
+  81.5% {
+    opacity: 1;
+  }
+}
+
+@keyframes crt-flicker-medium {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  3% {
+    opacity: 0.96;
+  }
+
+  3.3% {
+    opacity: 1;
+  }
+
+  22% {
+    opacity: 0.975;
+  }
+
+  22.3% {
+    opacity: 1;
+  }
+
+  41% {
+    opacity: 0.94;
+  }
+
+  41.5% {
+    opacity: 0.98;
+  }
+
+  41.8% {
+    opacity: 1;
+  }
+
+  63% {
+    opacity: 0.955;
+  }
+
+  63.3% {
+    opacity: 1;
+  }
+
+  84% {
+    opacity: 0.97;
+  }
+
+  84.3% {
+    opacity: 1;
+  }
+}
+
+@keyframes crt-flicker-heavy {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  2% {
+    opacity: 0.92;
+  }
+
+  2.2% {
+    opacity: 0.97;
+  }
+
+  2.4% {
+    opacity: 1;
+  }
+
+  18% {
+    opacity: 0.95;
+  }
+
+  18.2% {
+    opacity: 1;
+  }
+
+  37% {
+    opacity: 0.88;
+  }
+
+  37.2% {
+    opacity: 0.94;
+  }
+
+  37.5% {
+    opacity: 1;
+  }
+
+  56% {
+    opacity: 0.91;
+  }
+
+  56.3% {
+    opacity: 1;
+  }
+
+  71% {
+    opacity: 0.86;
+  }
+
+  71.2% {
+    opacity: 0.93;
+  }
+
+  71.5% {
+    opacity: 1;
+  }
+
+  89% {
+    opacity: 0.94;
+  }
+
+  89.2% {
+    opacity: 1;
+  }
+}
+
+/* ── Static noise movement — shifts the grain texture randomly ── */
+@keyframes crt-static {
+  0% {
+    transform: translate(0, 0);
+  }
+
+  20% {
+    transform: translate(-8%, -3%);
+  }
+
+  40% {
+    transform: translate(4%, -7%);
+  }
+
+  60% {
+    transform: translate(-3%, 5%);
+  }
+
+  80% {
+    transform: translate(7%, -2%);
+  }
+
+  100% {
+    transform: translate(-5%, 8%);
+  }
+}
+
+/* ── Reduce motion ─────────────────────────────────────── */
+.reduce-motion,
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ── Focus styles ──────────────────────────────────────── */
+*:focus-visible {
+  outline: 1px solid var(--color-cr-accent);
+  outline-offset: 2px;
+}
+
+/* ── Selection ─────────────────────────────────────────── */
+::selection {
+  background: rgba(62, 207, 90, 0.2);
+  color: var(--color-cr-text);
 }
