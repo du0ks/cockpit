@@ -28,7 +28,7 @@ export function Tabs({ tabs, activeTab, onChange, className }: TabsProps) {
                         'transition-all duration-200 cursor-pointer',
                         activeTab === tab.id
                             ? 'bg-cr-accent-muted text-cr-accent shadow-sm'
-                            : 'text-cr-text-muted hover:text-cr-text-secondary hover:bg-cr-panel'
+                            : 'text-cr-text-secondary hover:text-cr-text hover:bg-cr-panel'
                     )}
                 >
                     {tab.icon}

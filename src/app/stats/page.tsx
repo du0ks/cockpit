@@ -26,6 +26,7 @@ import {
     computeStreak,
     getWeekStartDate,
 } from '@/lib/utils/statsEngine';
+import { getAnxietyColor } from '@/lib/utils';
 
 import type { Task, CalendarEvent, AnxietyLog, Objective, WeeklyTarget } from '@/lib/models';
 import type { HeatmapCell, WeeklyBarData, EventBreakdown, TargetProgress, AnxietyPoint, ObjectiveRate } from '@/lib/utils/statsEngine';
@@ -64,7 +65,7 @@ export default function StatsPage() {
         setTargets(allTargets);
 
         // Compute stats
-        setHeatmap(computeActivityHeatmap(allTasks, 12));
+        setHeatmap(computeActivityHeatmap(allTasks, 52));
         const bars = computeWeeklyBars(allTasks);
         setWeeklyBars(bars);
         setWeekDone(bars.reduce((sum, b) => sum + b.completed, 0));
@@ -111,7 +112,7 @@ export default function StatsPage() {
                     value={anxietyAvg != null ? anxietyAvg : '—'}
                     icon="◉"
                     subtitle="Past 7 days"
-                    accentColor={anxietyAvg != null && anxietyAvg > 6 ? '#cf3e3e' : undefined}
+                    accentColor={anxietyAvg != null ? getAnxietyColor(anxietyAvg) : undefined}
                     trend={anxietyAvg != null ? (anxietyAvg <= 4 ? 'down' : anxietyAvg >= 7 ? 'up' : 'neutral') : undefined}
                 />
                 <StatCard
@@ -123,8 +124,8 @@ export default function StatsPage() {
             </div>
 
             {/* ── Activity Heatmap ────────────────────────── */}
-            <Panel title="Activity (12 weeks)" glow>
-                <ActivityHeatmap cells={heatmap} weeks={12} />
+            <Panel title="Activity (1 Year)" className="overflow-x-auto pb-4" glow>
+                <ActivityHeatmap cells={heatmap} weeks={52} />
             </Panel>
 
             {/* ── This Week Performance ───────────────────── */}

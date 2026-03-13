@@ -17,7 +17,7 @@ import { parkingLotRepository } from '@/lib/repositories/ParkingLotRepository';
 import { anxietyRepository } from '@/lib/repositories/AnxietyRepository';
 import { settingsRepository } from '@/lib/repositories/SettingsRepository';
 import type { Task, Objective, ParkingLotItem, AnxietyLog, TaskScope } from '@/lib/models';
-import { formatDate, getWeekNumber, todayString, cn } from '@/lib/utils';
+import { formatDate, getWeekNumber, todayString, cn, getAnxietyColor } from '@/lib/utils';
 
 export default function HomePage() {
   const { showToast } = useToast();
@@ -157,7 +157,10 @@ export default function HomePage() {
             </div>
           )}
           {todayAnxiety?.score && (
-            <Tag label={`Anxiety: ${todayAnxiety.score}/10`} color={todayAnxiety.score > 6 ? '#cf3e3e' : '#cfa63e'} />
+            <Tag 
+              label={`Anxiety: ${todayAnxiety.score}/10`} 
+              color={getAnxietyColor(todayAnxiety.score)} 
+            />
           )}
           <div className="font-mono text-xs text-cr-text-secondary ml-auto">
             {openToday} open · {doneToday} done
@@ -185,7 +188,7 @@ export default function HomePage() {
         {/* Left Sidebar: Telemetry & Context */}
         <div className="md:col-span-3 lg:col-span-3 space-y-4">
           {/* Anxiety Mini Panel (System Status) */}
-          <Panel title="System Status" className="border-cr-border bg-transparent">
+          <Panel title="System Status" className="border-cr-border">
             <div className="space-y-4">
               <a
                 href="/calm"
@@ -196,7 +199,9 @@ export default function HomePage() {
               <div className="space-y-1">
                 <div className="flex justify-between text-[10px] font-mono text-cr-text-secondary mb-1">
                   <span>STRESS LEVEL</span>
-                  <span>{anxietyScore}/10</span>
+                  <span style={{ color: getAnxietyColor(anxietyScore) }} className="font-bold">
+                    {anxietyScore}/10
+                  </span>
                 </div>
                 <SliderInput
                   value={anxietyScore}
@@ -204,7 +209,7 @@ export default function HomePage() {
                   min={1}
                   max={10}
                 />
-                <Button size="sm" variant="ghost" onClick={saveAnxietyScore} className="w-full text-[10px] h-6 mt-1 opacity-80 hover:opacity-100">
+                <Button size="sm" variant="ghost" onClick={saveAnxietyScore} className="w-full text-[10px] h-6 mt-1 opacity-90 hover:opacity-100">
                   Update System
                 </Button>
               </div>
@@ -212,7 +217,7 @@ export default function HomePage() {
           </Panel>
 
           {/* Peripheral Context: Week/Month/Quarter Telemetry */}
-          <Panel title="Mission Context" className="border-cr-border bg-transparent">
+          <Panel title="Mission Context" className="border-cr-border">
             <div className="space-y-4">
               {/* Week Progress */}
               <div>
@@ -268,7 +273,7 @@ export default function HomePage() {
           {/* Parking Lot Preview */}
           <Panel
             title="Parking Lot"
-            className="border-cr-border bg-transparent"
+            className="border-cr-border"
             headerAction={
               <a href="/parking-lot" className="font-mono text-[10px] text-cr-accent/80 hover:text-cr-accent transition-colors">
                 View All →
@@ -304,7 +309,7 @@ export default function HomePage() {
               </div>
             }
             glow
-            className="h-full border-cr-border bg-cr-panel/80"
+            className="h-full border-cr-border bg-cr-panel"
             headerAction={
               <Button size="sm" variant="primary" onClick={() => { setQuickAddScope(activeFlightPath === 'quarter' ? 'today' : activeFlightPath); setShowQuickAdd(true); }} className="h-7 text-xs px-3">
                 + Execute [N]

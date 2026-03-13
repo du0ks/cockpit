@@ -14,12 +14,12 @@ interface StatCardProps {
 
 export function StatCard({ label, value, subtitle, trend, icon, accentColor }: StatCardProps) {
     return (
-        <div className="rounded-lg border border-cr-border bg-cr-panel/80 p-4 transition-all duration-300 hover:border-cr-border-hover hover:shadow-[0_0_20px_rgba(62,207,90,0.05)]">
+        <div className="rounded-lg border border-cr-border bg-cr-panel p-4 transition-all duration-300 hover:border-cr-border-hover hover:shadow-[0_0_20px_rgba(62,207,90,0.05)]">
             <div className="flex items-start justify-between mb-1">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-cr-text-muted">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-cr-text-secondary">
                     {label}
                 </span>
-                {icon && <span className="text-sm opacity-60">{icon}</span>}
+                {icon && <span className="text-sm opacity-80">{icon}</span>}
             </div>
             <div className="flex items-baseline gap-2">
                 <span

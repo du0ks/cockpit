@@ -16,7 +16,7 @@ export function Panel({ children, className, title, headerAction, noPadding, glo
     return (
         <div
             className={cn(
-                'rounded-md bg-cr-panel/70 backdrop-blur-sm',
+                'rounded-md bg-cr-panel backdrop-blur-sm',
                 'transition-all duration-300',
                 !noPadding && 'p-4',
                 className

@@ -39,3 +39,9 @@ export function todayString(): string {
 export function cn(...classes: (string | boolean | undefined | null)[]): string {
     return classes.filter(Boolean).join(' ');
 }
+
+export function getAnxietyColor(score: number): string {
+    if (score <= 3) return '#3ecf5a'; // Green
+    if (score <= 6) return '#cfa63e'; // Yellow
+    return '#cf3e3e'; // Red
+}

@@ -12,7 +12,7 @@ interface EmptyStateProps {
 export function EmptyState({ icon = '◇', title, description, action }: EmptyStateProps) {
     return (
         <div className="flex flex-col items-center justify-center py-8 text-center">
-            <span className="mb-3 text-2xl opacity-70">{icon}</span>
+            <span className="mb-3 text-2xl opacity-85">{icon}</span>
             <p className="font-mono text-sm text-cr-text-secondary">{title}</p>
             {description && (
                 <p className="mt-1 text-xs text-cr-text-muted max-w-xs">{description}</p>
